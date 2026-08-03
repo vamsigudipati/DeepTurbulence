@@ -28,8 +28,12 @@ Solid arrows = `uses`; dotted arrows = `source → copy` (single source of truth
 
 ```mermaid
 graph LR
-    %% no dependency edges detected
+    Data_generator_Moehlis_model["Data generator (Moehlis model)"] -- ".mat data files" --> Neural_networks_models["Neural networks models"]
+    Data_generator_Moehlis_model -. "documents" .-> docs["docs"]
+    Neural_networks_models -. "documents" .-> docs
 ```
+
+The auto-generated draft found no edges because MATLAB and Python files never `import`/`require` each other directly — the dependency is a **file-based data contract**, not a code reference: `Data generator (Moehlis model)/moehlis_data_gen.m` writes a `moehlis_data_<nTS>.mat` file (a 3D array `data` of shape `(nTS, nTP, 9)`) that `Neural networks models/train_mlp_model.py` and `train_lstm_model.py` load via `scipy.io.loadmat`. This is the single most important edge in the repository: everything downstream (training, prediction, visualization) depends on the shape and naming convention of this file.
 
 ## 3. Entity Inventory
 
@@ -41,20 +45,20 @@ graph LR
 
 > Walk these modules **along the dependency edges above**, highest complexity first. Replace each `> TODO(doc-miner)` with findings.
 
+### Data generator (Moehlis model)
+
+- **Data generator (Moehlis model)** (module) — `Data generator (Moehlis model)`
+  - Generates the ground-truth turbulence data: MATLAB scripts integrate the nine-equation Galerkin ODE model of Moehlis *et al.* (`moehlis_model_odefun.m`) to produce time series of nine modal amplitudes, either a single series (`moehlis_model_script.m`) or a batch of independent series filtered for laminarization (`moehlis_data_gen.m`), and visualize them (`plot_amplitudes.m`, `visualize_fields.m`). It references no other module — it is the **source of truth** for the `.mat` data consumed by Neural networks models.
+
 ### Neural networks models
 
 - **Neural networks models** (module) — `Neural networks models`
-  - > TODO(doc-miner): what does Neural networks models do and which entities does it reference?
+  - Trains and runs the predictors: `train_mlp_model.py`/`train_lstm_model.py` build Keras `Sequential` MLP/LSTM models from the `.mat` files produced by Data generator (Moehlis model), and `predict_using_mlp.py`/`predict_using_lstm.py` reload a trained `.h5` model to autoregressively roll out new time series. It references **Data generator (Moehlis model)** as its data source (via `.mat` files) and ships its own `trained_nn_models/` folder of pre-trained weights.
 
 ### docs
 
 - **docs** (module) — `docs`
-  - > TODO(doc-miner): what does docs do and which entities does it reference?
-
-### Data generator (Moehlis model)
-
-- **Data generator (Moehlis model)** (module) — `Data generator (Moehlis model)`
-  - > TODO(doc-miner): what does Data generator (Moehlis model) do and which entities does it reference?
+  - Holds the generated documentation set (`docs/guides/`: topology, developer guide, user guide, tutorial) and a local Markdown copy of the reference paper (`docs/references/`). It references both **Data generator (Moehlis model)** and **Neural networks models** as its subject matter — every claim in `docs/guides/` is grounded in a file from one of those two modules — but no code in `docs/` is imported or executed by them.
 
 ---
 

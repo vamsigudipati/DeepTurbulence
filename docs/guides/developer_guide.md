@@ -136,7 +136,7 @@ end
 
 The domain data container is a single 3D array named `data` of shape `(nTS, nTP, 9)`, saved as `moehlis_data_<nTS>.mat`. The reconstruction of the physical velocity field from the nine amplitudes (used only for visualization/statistics) lives in [visualize_fields.m](../../Data%20generator%20%28Moehlis%20model%29/visualize_fields.m), which hard-codes the analytic form of each Fourier mode $\mathbf{u}_j(\mathbf{x})$ on a grid, e.g. `u1x = 2^0.5*sin(B*yp(j))` for the mean-profile mode.
 
-> TODO(doc-miner): the test file `moehlis_test_data_###.mat` is required by both prediction scripts but is not produced by a checked-in script; document how it is generated (presumably a second run of `moehlis_data_gen.m` with a different seed/output name).
+The held-out `moehlis_test_data_###.mat` file required by both prediction scripts is produced by [moehlis_test_data_gen.m](../../Data%20generator%20%28Moehlis%20model%29/moehlis_test_data_gen.m), added alongside `moehlis_data_gen.m`. It runs the identical ODE integration and laminarization filter, differing only in two respects: it seeds the RNG explicitly (`rng(12345)`) so its perturbations never coincide with an unseeded training run of `moehlis_data_gen.m`, and it saves under the `moehlis_test_data_<nTS>.mat` name (with `nTS = 100` by default, matching the `dataFilename` already hard-coded in [predict_using_mlp.py](../../Neural%20networks%20models/predict_using_mlp.py) and [predict_using_lstm.py](../../Neural%20networks%20models/predict_using_lstm.py)).
 
 ## 8. Learning core (loss, back-propagation, optimization)
 
@@ -246,7 +246,17 @@ valLossHistory = score.history['val_loss']
 | --- | --- | --- |
 | `History` (implicit) | end of `model.fit` | capture `loss` / `val_loss` to write `_loss.mat` |
 
-> TODO(doc-miner): early stopping is described in the paper (Fig. 2) but no `EarlyStopping` callback exists in the code; a contributor adding it would attach it via the `callbacks=[...]` argument of `model.fit`.
+Early stopping is described in the paper (Fig. 2) as the mechanism used to avoid overfitting, but no `EarlyStopping` callback is registered in either training script — `nbEpochs` always runs to completion. A contributor adding it would import `EarlyStopping` from `keras.callbacks` and pass it through `model.fit`'s `callbacks` argument, monitoring `val_loss`:
+
+```python
+from keras.callbacks import EarlyStopping
+
+early_stop = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
+score = model.fit(X, Y, batch_size=32, epochs=nbEpochs, verbose=1,
+                  validation_split=0.20, shuffle=True, callbacks=[early_stop])
+```
+
+This is intentionally left as an extension point rather than a default in `train_mlp_model.py`/`train_lstm_model.py` (see also `tutorial.md` Chapter 10, extension 1), since those scripts reproduce the exact configuration used to produce the paper's published results.
 
 ## 13. Loss & metric registries
 
@@ -256,7 +266,14 @@ valLossHistory = score.history['val_loss']
   $$\varepsilon_1 = \frac{1}{(N_s - p)\,a_{1,\text{lam}}} \sum_{j=p+1}^{N_s} \lvert a_{1,\text{tra}}^j - a_{1,\text{pred}}^j \rvert,$$
   and the mean-flow relative error $E_{\bar u}$ (paper Eq. 4). These are computed from the saved `series_#.mat` files.
 
-> TODO(doc-miner): no script in the repository computes $\varepsilon_1$ or $E_{\bar u}$; the post-processing that produced the paper's Tables I–III is not checked in.
+Both metrics are now computed by [compute_turbulence_statistics.py](../../Neural%20networks%20models/compute_turbulence_statistics.py), added alongside the prediction scripts. It loads a batch of `series_#.mat` files (produced by `predict_using_mlp.py`/`predict_using_lstm.py`) and reports $\varepsilon_1$ directly from the `a_1` columns of `testSeq`/`predSeq`, and $E_{\bar u}$ by reconstructing the mean streamwise profile analytically from amplitudes $a_1$ and $a_9$ alone — the only two Fourier modes without an $x$ or $z$ dependence, so every other mode integrates to zero over the periodic directions (see `visualize_fields.m`). It deliberately does **not** compute $E_{u'^2}$, the Reynolds shear stress, skewness, or flatness, since those require reconstructing the full 3D velocity field from all nine modes and evaluating cross-mode integrals — a larger undertaking left as a further extension.
+
+```bash
+python compute_turbulence_statistics.py LSTM1_t100_ps 10
+# Series evaluated: 10
+# eps_1  (mean over series) : <value> %
+# E_ubar (ensemble-averaged): <value> %
+```
 
 ## 14. Parallel / distributed training
 

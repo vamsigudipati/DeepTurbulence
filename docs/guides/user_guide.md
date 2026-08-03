@@ -26,7 +26,7 @@ Install the Python dependencies with pip:
 pip install numpy scipy matplotlib keras tensorflow
 ```
 
-> TODO(doc-miner): the repository does not pin exact package versions; the scripts use the standalone `keras` import style (`from keras.models import Sequential, load_model`), so a Keras/TensorFlow version pair from the same era as the 2019 paper is the safest bet if you hit API incompatibilities.
+The repository does not pin exact package versions, and the scripts use the standalone `keras` import style (`from keras.models import Sequential, load_model`) rather than `tensorflow.keras`. That style matches the multi-backend `keras` PyPI package (2.2.x-2.3.x) from before the Keras/TensorFlow 2 unification, paired with a TensorFlow 1.x backend (e.g. `tensorflow==1.12`-`1.15`) — the safest bet if you hit API incompatibilities on a fresh install, matching the 2018-2019 era of the accompanying paper. If you prefer a current environment instead, replace the two `keras` imports in each script with `from tensorflow.keras.models import ...` / `from tensorflow.keras.layers import ...` and install only `tensorflow` (2.x ships `tf.keras`, which is API-compatible with these scripts).
 
 No further build step is required — clone the repository and run the scripts from within their own folders, since each script references data/model files by bare filename (e.g. `"moehlis_data_100.mat"`), not by absolute path.
 
@@ -111,12 +111,12 @@ init(4) = 0.1*rand;   % moehlis_data_gen.m perturbs a_4 randomly per series
 | File pattern | Produced by | Shape / fields | Used by |
 | --- | --- | --- | --- |
 | `moehlis_data_<nTS>.mat` | [moehlis_data_gen.m](../../Data%20generator%20%28Moehlis%20model%29/moehlis_data_gen.m) | variable `data`, shape `(nTS, nTP, 9)` | `train_mlp_model.py`, `train_lstm_model.py` (training set) |
-| `moehlis_test_data_<nTS>.mat` | same generator, run again for a held-out set | variable `data`, shape `(nTS, nTP, 9)` | `predict_using_mlp.py`, `predict_using_lstm.py` (seed + reference) |
+| `moehlis_test_data_<nTS>.mat` | [moehlis_test_data_gen.m](../../Data%20generator%20%28Moehlis%20model%29/moehlis_test_data_gen.m) | variable `data`, shape `(nTS, nTP, 9)` | `predict_using_mlp.py`, `predict_using_lstm.py` (seed + reference) |
 | `<name>.h5` | `train_mlp_model.py` / `train_lstm_model.py` | Keras `Sequential` model (weights + architecture) | `predict_using_*.py` via `load_model` |
 | `<name>_loss.mat` | `train_mlp_model.py` / `train_lstm_model.py` | `lossHistory`, `valLossHistory` arrays | inspecting training convergence |
-| `series_#.mat` | `predict_using_mlp.py` / `predict_using_lstm.py` | `testSeq`, `predSeq`, each `(nTP, 9)` | `plot_amplitudes.m`, `visualize_fields.m`, custom analysis |
+| `series_#.mat` | `predict_using_mlp.py` / `predict_using_lstm.py` | `testSeq`, `predSeq`, each `(nTP, 9)` | `plot_amplitudes.m`, `visualize_fields.m`, `compute_turbulence_statistics.py` |
 
-> TODO(doc-miner): no script in the repository generates `moehlis_test_data_###.mat` under that exact name; run `moehlis_data_gen.m` again with a different `count`/output name to produce a held-out set.
+[moehlis_test_data_gen.m](../../Data%20generator%20%28Moehlis%20model%29/moehlis_test_data_gen.m) runs the same ODE integration and laminarization filter as `moehlis_data_gen.m`, differing only in an explicit RNG seed (so it never overlaps with a training run) and the `moehlis_test_data_<nTS>.mat` output name (`nTS = 100` by default, matching the `dataFilename` already hard-coded in the prediction scripts).
 
 ## 9. PDE residual / constraint authoring
 
@@ -214,7 +214,11 @@ plot_amplitudes(predSeq)
 visualize_fields(predSeq)
 ```
 
-> TODO(doc-miner): both `predict_using_mlp.py` and `predict_using_lstm.py` `import matplotlib.pyplot as plt` but never call a plotting function; all current plotting is done from MATLAB on the saved `series_#.mat` files.
+Both `predict_using_mlp.py` and `predict_using_lstm.py` `import matplotlib.pyplot as plt` but never call a plotting function — all current plotting is done from MATLAB on the saved `series_#.mat` files, as shown above. For a quantitative (rather than visual) check, use [compute_turbulence_statistics.py](../../Neural%20networks%20models/compute_turbulence_statistics.py) to compute the paper's relative-error metrics directly from a folder of `series_#.mat` files:
+
+```bash
+python compute_turbulence_statistics.py LSTM1_t100_ps 10
+```
 
 ## 17. Parallel training
 

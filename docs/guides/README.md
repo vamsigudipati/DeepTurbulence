@@ -9,7 +9,7 @@ This folder contains four coordinated documents derived from mining the deep-tur
 | [user_guide.md](./user_guide.md) | End users / applied engineers | Installation, configuration, and how to run the training/prediction scripts. |
 | [tutorial.md](./tutorial.md) | Learners at any level | 10-chapter "from beginner to expert" walkthrough, grounded in the MATLAB and Python scripts in this repository. |
 
-> Upstream project: [DeepTurbulence](https://github.com/lguas/Deepturb)
+> Upstream project: [DeepTurbulence](https://github.com/lguas/DeepTurbulence)
 > Canonical citation: full citation in [README.md § Scientific context](../../README.md#2-scientific-context).
 
 ## How these documents were produced

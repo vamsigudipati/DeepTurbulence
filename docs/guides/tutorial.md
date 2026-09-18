@@ -1,4 +1,4 @@
-# DeepTurbulence — From Beginner to Expert Tutorial
+# deep-turbulence — From Beginner to Expert Tutorial
 
 > Ten chapters, progressively deeper. Every chapter is anchored in at least one real script from the repository — no invented APIs.
 
@@ -13,7 +13,7 @@
 - Chapter 7 — Predicting new turbulent time series
 - Chapter 8 — Visualizing predictions and reconstructed flow fields
 - Chapter 9 — Improving accuracy: architectures, epochs, and turbulence statistics
-- Chapter 10 — Mastery: extending DeepTurbulence
+- Chapter 10 — Mastery: extending deep-turbulence
 
 ---
 
@@ -278,7 +278,7 @@ and analogous errors $E_{\bar u}$, $E_{\overline{u^2}}$ for the reconstructed me
 
 ---
 
-## Chapter 10 · Mastery: extending DeepTurbulence
+## Chapter 10 · Mastery: extending deep-turbulence
 
 Pick one of the following extension points, grounded in the gaps identified while writing this documentation, and implement a small patch:
 
@@ -297,4 +297,4 @@ Pick one of the following extension points, grounded in the gaps identified whil
 - Deep source reading: [developer_guide.md](./developer_guide.md).
 - Task-oriented how-tos: [user_guide.md](./user_guide.md).
 - Structural map: [topology.md](./topology.md).
-- Canonical citation: P. A. Srinivasan, L. Guastoni, H. Azizpour, P. Schlatter, R. Vinuesa, "Predictions of turbulent shear flows using deep neural networks", *Phys. Rev. Fluids* **4**, 054603 (2019); local copy in [docs/references/](../references/).
+- Canonical citation: full citation in [README.md § Scientific context](../../README.md#2-scientific-context); local copy in [docs/references/](../references/).

@@ -1,10 +1,10 @@
-# DeepTurbulence
+# deep-turbulence
 
 Predicting the temporal dynamics of turbulent shear flows with deep neural networks, using a low-order model of near-wall turbulence as ground truth.
 
 ## 1. Project summary
 
-DeepTurbulence couples a MATLAB implementation of a low-dimensional turbulence model with Python/Keras neural networks that learn to predict its time evolution. Concretely, the repository:
+deep-turbulence couples a MATLAB implementation of a low-dimensional turbulence model with Python/Keras neural networks that learn to predict its time evolution. Concretely, the repository:
 
 - Integrates the **nine-equation shear-flow model** of Moehlis *et al.* to generate turbulent time series of nine modal amplitudes ([Data generator (Moehlis model)/](Data%20generator%20%28Moehlis%20model%29)).
 - Trains a **multilayer perceptron (MLP)** or a **long short-term memory (LSTM)** network to predict the next amplitude state from a window of previous states ([Neural networks models/](Neural%20networks%20models)).

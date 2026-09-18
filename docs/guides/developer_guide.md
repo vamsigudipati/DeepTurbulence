@@ -1,4 +1,4 @@
-# DeepTurbulence — Developer Guide
+# deep-turbulence — Developer Guide
 
 > Baseline: current `master`-equivalent snapshot of the repository (no version tag or manifest is present). For contributors who need to read the source, extend the models, or reproduce the results of the accompanying paper.
 
@@ -6,7 +6,7 @@
 
 ## 1. Project positioning & scope
 
-DeepTurbulence is a research code base that assesses whether deep neural networks can predict the *temporal* evolution of a low-order model of near-wall turbulence. It couples a MATLAB implementation of the nine-equation shear-flow model of Moehlis *et al.* (2004) — which produces ground-truth time series of nine modal amplitudes — with Python/Keras scripts that train and evaluate two families of networks (multilayer perceptron, MLP, and long short-term memory, LSTM) on those series. The instantaneous velocity field is reconstructed from the nine amplitudes as a superposition of nine Fourier modes,
+deep-turbulence is a research code base that assesses whether deep neural networks can predict the *temporal* evolution of a low-order model of near-wall turbulence. It couples a MATLAB implementation of the nine-equation shear-flow model of Moehlis *et al.* (2004) — which produces ground-truth time series of nine modal amplitudes — with Python/Keras scripts that train and evaluate two families of networks (multilayer perceptron, MLP, and long short-term memory, LSTM) on those series. The instantaneous velocity field is reconstructed from the nine amplitudes as a superposition of nine Fourier modes,
 
 $$\tilde{\mathbf{u}}(\mathbf{x}, t) = \sum_{j=1}^{9} a_j(t)\,\mathbf{u}_j(\mathbf{x}),$$
 
@@ -28,7 +28,7 @@ Headline capabilities:
 ## 3. Repository layout
 
 ```
-DeepTurbulence/
+deep-turbulence/
 ├── README.md                         # Project overview + links to paper & data
 ├── Data generator (Moehlis model)/   # MATLAB: ground-truth data generation
 │   ├── moehlis_model_odefun.m        # The 9-ODE right-hand side (Galerkin system)
@@ -47,29 +47,24 @@ DeepTurbulence/
 
 ## 4. Runtime architecture overview
 
-```
-      MATLAB (data generation)              Python / Keras (learning)
- ┌───────────────────────────────┐   ┌────────────────────────────────────┐
- │ moehlis_model_odefun.m        │   │ train_mlp_model.py                  │
- │   9-ODE Galerkin system       │   │ train_lstm_model.py                 │
- │            │                  │   │   build Sequential model            │
- │            ▼                  │   │   window data -> (X, Y)             │
- │ moehlis_data_gen.m  ──────────┼──▶│   model.fit(...)                    │
- │   ode15s integration          │   │            │                        │
- │   -> moehlis_data_###.mat     │   │            ▼                        │
- │      array (nTS, nTP, 9)      │   │   model.save(****.h5)               │
- └───────────────────────────────┘   │      + ****_loss.mat                │
-                                      └───────────────┬────────────────────┘
-                                                      │  trained_nn_models/*.h5
-                                                      ▼
-                                      ┌────────────────────────────────────┐
-        moehlis_test_data_###.mat ───▶│ predict_using_{mlp,lstm}.py         │
-                                      │   load_model(*.h5)                  │
-                                      │   autoregressive one-step rollout   │
-                                      │   -> series_#.mat (testSeq/predSeq) │
-                                      └───────────────┬────────────────────┘
-                                                      ▼
-                                      visualize_fields.m / plot_amplitudes.m
+```mermaid
+graph TD
+    subgraph matlab_gen["MATLAB (data generation)"]
+        odefun["moehlis_model_odefun.m<br/>9-ODE Galerkin system"]
+        datagen["moehlis_data_gen.m<br/>ode15s integration"]
+    end
+    subgraph python_learn["Python / Keras (learning)"]
+        train["train_mlp_model.py /<br/>train_lstm_model.py<br/>build Sequential, window data -&gt; (X, Y), model.fit"]
+        predict["predict_using_mlp.py /<br/>predict_using_lstm.py<br/>load_model, autoregressive rollout"]
+    end
+    testdata["moehlis_test_data_###.mat"]
+    viz["visualize_fields.m /<br/>plot_amplitudes.m"]
+
+    odefun --> datagen
+    datagen -->|"data: moehlis_data_###.mat<br/>array (nTS, nTP, 9)"| train
+    train -->|"data: *.h5 model + _loss.mat<br/>(trained_nn_models/)"| predict
+    testdata --> predict
+    predict -->|"data: series_#.mat<br/>(testSeq/predSeq)"| viz
 ```
 
 Narrative: the pipeline has a strict left-to-right data-flow. MATLAB integrates the ODE system to produce a 3D array of shape `(nTS, nTP, 9)` (number of time series × time points × nine amplitudes), saved as a `.mat` file. The Python training scripts slide a window of length `seqLen` over each series to form supervised `(X, Y)` pairs, fit a Keras `Sequential` model, and persist it as an HDF5 `.h5` file plus a `_loss.mat` history. The prediction scripts reload the `.h5` model and roll it forward autoregressively — each predicted state is appended to the input window to predict the next — reproducing entire trajectories from only a seed of the first `seqLen` states. There is no shared library between the MATLAB and Python sides; the `.mat` file is the sole interface contract.
@@ -309,6 +304,6 @@ pip install numpy scipy matplotlib keras tensorflow
 
 ## References
 
-- Main paper: P. A. Srinivasan, L. Guastoni, H. Azizpour, P. Schlatter, R. Vinuesa, "Predictions of turbulent shear flows using deep neural networks", *Phys. Rev. Fluids* **4**, 054603 (2019). DOI: [10.1103/PhysRevFluids.4.054603](https://doi.org/10.1103/PhysRevFluids.4.054603); preprint [arXiv:1905.03634](https://arxiv.org/abs/1905.03634).
+- Main paper: full citation in [README.md § Scientific context](../../README.md#2-scientific-context).
 - Underlying model: J. Moehlis, H. Faisst, B. Eckhardt, "A low-dimensional model for turbulent shear flows", *New J. Phys.* **6**, 56 (2004). DOI: [10.1088/1367-2630/6/1/056](https://doi.org/10.1088/1367-2630/6/1/056).
 - Local reference copy: [docs/references/Predictions of turbulent shear flows using deep neural networks/](../references/).

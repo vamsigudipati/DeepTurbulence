@@ -1,10 +1,10 @@
-# DeepTurbulence — User Guide
+# deep-turbulence — User Guide
 
 > For users who want to generate turbulence data and train/run the MLP or LSTM predictors, without reading the full [developer guide](./developer_guide.md).
 
 ---
 
-## 1. What DeepTurbulence can do
+## 1. What deep-turbulence can do
 
 - Generate ground-truth turbulent time series for the nine-mode Moehlis shear-flow model via MATLAB ([Data generator (Moehlis model)/moehlis_data_gen.m](../../Data%20generator%20%28Moehlis%20model%29/moehlis_data_gen.m)).
 - Train a multilayer perceptron (MLP) or a long short-term memory (LSTM) network in Python/Keras to predict the next state of the nine amplitudes from a window of previous states ([Neural networks models/train_mlp_model.py](../../Neural%20networks%20models/train_mlp_model.py), [Neural networks models/train_lstm_model.py](../../Neural%20networks%20models/train_lstm_model.py)).
@@ -13,7 +13,7 @@
 
 ## 2. Installation
 
-DeepTurbulence is not a packaged library — there is no `setup.py`, `pyproject.toml`, or `requirements.txt` in the repository. You run the MATLAB and Python scripts directly from a local clone.
+deep-turbulence is not a packaged library — there is no `setup.py`, `pyproject.toml`, or `requirements.txt` in the repository. You run the MATLAB and Python scripts directly from a local clone.
 
 | Component | Requirement |
 | --- | --- |
@@ -66,20 +66,12 @@ Key knobs (same names apply to [train_lstm_model.py](../../Neural%20networks%20m
 
 There are no user-facing classes; the "objects" a user interacts with are files passed between MATLAB and Python:
 
-```
- moehlis_data_gen.m  --> moehlis_data_<nTS>.mat  (data['data']: (nTS, nTP, 9))
-                                  |
-                                  v
-        train_{mlp,lstm}_model.py  --> <name>.h5  +  <name>_loss.mat
-                                  |
-                                  v
- moehlis_test_data_<nTS>.mat + <name>.h5
-                                  |
-                                  v
-        predict_using_{mlp,lstm}.py  --> series_#.mat (testSeq, predSeq)
-                                  |
-                                  v
-        plot_amplitudes.m / visualize_fields.m
+```mermaid
+graph TD
+    gen["moehlis_data_gen.m"] -->|"moehlis_data_&lt;nTS&gt;.mat<br/>(data['data']: (nTS, nTP, 9))"| train["train_{mlp,lstm}_model.py"]
+    train -->|"&lt;name&gt;.h5 + &lt;name&gt;_loss.mat"| predict["predict_using_{mlp,lstm}.py"]
+    testdata["moehlis_test_data_&lt;nTS&gt;.mat"] --> predict
+    predict -->|"series_#.mat<br/>(testSeq, predSeq)"| viz["plot_amplitudes.m /<br/>visualize_fields.m"]
 ```
 
 ## 6. Geometry / domain definition
@@ -264,4 +256,4 @@ python predict_using_lstm.py
 
 - Developer guide: [developer_guide.md](./developer_guide.md) — architecture, training-loop internals, and contribution SOPs.
 - Repository topology: [topology.md](./topology.md)
-- Main paper: P. A. Srinivasan, L. Guastoni, H. Azizpour, P. Schlatter, R. Vinuesa, "Predictions of turbulent shear flows using deep neural networks", *Phys. Rev. Fluids* **4**, 054603 (2019). DOI: [10.1103/PhysRevFluids.4.054603](https://doi.org/10.1103/PhysRevFluids.4.054603); local copy in [docs/references/](../references/).
+- Main paper: full citation in [README.md § Scientific context](../../README.md#2-scientific-context); local copy in [docs/references/](../references/).

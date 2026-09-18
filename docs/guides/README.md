@@ -1,6 +1,6 @@
-# DeepTurbulence Guide Hub
+# deep-turbulence Guide Hub
 
-This folder contains four coordinated documents derived from mining the DeepTurbulence source tree using the topology-first workflow:
+This folder contains four coordinated documents derived from mining the deep-turbulence source tree using the topology-first workflow:
 
 | File | Audience | Contents |
 | --- | --- | --- |
@@ -10,7 +10,7 @@ This folder contains four coordinated documents derived from mining the DeepTurb
 | [tutorial.md](./tutorial.md) | Learners at any level | 10-chapter "from beginner to expert" walkthrough, grounded in the MATLAB and Python scripts in this repository. |
 
 > Upstream project: [DeepTurbulence](https://github.com/lguas/Deepturb)
-> Canonical citation: P. A. Srinivasan, L. Guastoni, H. Azizpour, P. Schlatter, R. Vinuesa, "Predictions of turbulent shear flows using deep neural networks", *Phys. Rev. Fluids* **4**, 054603 (2019).
+> Canonical citation: full citation in [README.md § Scientific context](../../README.md#2-scientific-context).
 
 ## How these documents were produced
 
